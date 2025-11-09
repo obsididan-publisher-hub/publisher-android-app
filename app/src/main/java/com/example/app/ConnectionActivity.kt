@@ -9,62 +9,91 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.launch
-import com.example.app.Settings
-private lateinit var settings: Settings
+import android.content.SharedPreferences
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 
 class ConnectionActivity : AppCompatActivity() {
 
-    private val client = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json()
+    internal val client by lazy {
+        HttpClient(CIO) {
+            install(ContentNegotiation) { json() }
         }
     }
+
+    internal lateinit var label: TextView
+    internal lateinit var userData: EditText
+    internal lateinit var button: Button
+    internal lateinit var prefs: SharedPreferences
+    internal lateinit var settings: Settings
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
+        initViews()
+        setupPreferences()
         settings = Settings(this)
-        val label = findViewById<TextView>(R.id.main_label)
-        val userData: EditText = findViewById(R.id.user_data)
-        val button: Button = findViewById(R.id.button)
+        loadSavedHost()
+        setupClickListeners()
+    }
 
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    private fun initViews() {
+        label = findViewById(R.id.main_label)
+        userData = findViewById(R.id.user_data)
+        button = findViewById(R.id.button)
+    }
 
+    private fun setupPreferences() {
+        prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    }
+
+    private fun loadSavedHost() {
         val savedHost = prefs.getString("saved_host", null)
-        if (savedHost != null) {
-            label.text = "Сохранённый хост: $savedHost"
+        savedHost?.let {
+            label.text = "Сохранённый хост: $it"
         }
+    }
 
+    private fun setupClickListeners() {
         button.setOnClickListener {
-            val text = userData.text.toString().trim()
+            handleUserInput()
+        }
+    }
+    private fun handleUserInput() {
+        val text = userData.text.toString().trim()
 
-            if (AppUtils.isUrlCorrect(text)) {
-                val host = AppUtils.extractHost(text)
-                if (host != null) {
-                    prefs.edit().putString("saved_host", host).apply()
-                    label.text = "Сохранили хост: $host"
-                }
-                AppUtils.tryToOpenStartNote(this, text)
-            } else {
-                label.text = text
-            }
+        if (AppUtils.isUrlCorrect(text)) {
+            val host = AppUtils.extractHost(text)
+            host?.let { saveHost(it) }
+            performGetRequest(text)
+        } else {
+            Toast.makeText(this, "URL введён некорректно!", Toast.LENGTH_LONG).show()
+            label.text = "Некорректный URL: $text"
+        }
+    }
 
-            lifecycleScope.launch {
-                try {
-                    val response: String = client.get("https://jsonplaceholder.typicode.com/users/100").body()
-                    label.text = response
-                } catch (e: Exception) {
-                    Toast.makeText(this@ConnectionActivity, "Ошибка запроса: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+    internal fun performGetRequest(url: String) {
+        lifecycleScope.launch {
+            try {
+                val response: String = client.get(url).body()
+                label.text = response
+                Toast.makeText(this@ConnectionActivity, "GET запрос успешен!", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                label.text = "Ошибка GET запроса: ${e.message}"
+                Toast.makeText(this@ConnectionActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun saveHost(host: String) {
+        prefs.edit().putString("saved_host", host).apply()
+        label.text = "Сохранили хост: $host"
     }
 
     override fun onDestroy() {
