@@ -5,9 +5,8 @@ import org.junit.Assert.*
 
 class AppUtilsTest {
 
-/*isUrlCorrect - true, если http + host*/
-    @Test
-    fun `isUrlCorrect returns true for valid HTTPS URLs`() {
+    @Test /*isUrlCorrect - true, если http + host*/
+    fun `isUrlCorrect returns true for valid HTTP and HTTPS URLs`() {
         assertTrue(AppUtils.isUrlCorrect("https://google.com"))
         assertTrue(AppUtils.isUrlCorrect("https://example.com:8080"))
         assertTrue(AppUtils.isUrlCorrect("https://sub.domain.co.uk/path"))
@@ -33,8 +32,7 @@ class AppUtilsTest {
         assertFalse(AppUtils.isUrlCorrect("192.168.1.1"))
     }
 
-/*extractHost*/
-    @Test
+    @Test /*extractHost*/
     fun `extractHost returns correct host for HTTPS URLs`() {
         assertEquals("google.com", AppUtils.extractHost("https://google.com"))
         assertEquals("example.com", AppUtils.extractHost("https://example.com:8080"))

@@ -56,13 +56,15 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("io.ktor:ktor-client-core:2.3.4")
-    implementation("io.ktor:ktor-client-cio:2.3.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
-    implementation("androidx.activity:activity-compose:1.8.0")
-    implementation("androidx.compose.ui:ui:1.6.0")
-    implementation("androidx.compose.material:material:1.6.0")
+// Retrofit
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-scalars:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.3.0")
+// Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+// Lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 }

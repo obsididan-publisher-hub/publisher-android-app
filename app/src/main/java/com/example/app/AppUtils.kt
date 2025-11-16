@@ -9,7 +9,7 @@ object AppUtils {
         return try {
             URL(url)
             true
-        } catch (e: MalformedURLException) {
+        } catch (_: MalformedURLException) {
             false
         }
     }
@@ -17,7 +17,7 @@ object AppUtils {
         return try {
             val parsed = URL(url)
             parsed.host
-        } catch (e: MalformedURLException) {
+        } catch (_: MalformedURLException) {
             null
         }
     }
