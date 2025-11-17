@@ -1,10 +1,10 @@
 package com.example.app
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
@@ -12,17 +12,16 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.scalars.ScalarsConverterFactory
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import java.io.IOException
 import java.net.URL
 
 class ConnectionActivity : AppCompatActivity() {
 
-    private lateinit var label: TextView
     private lateinit var userData: EditText
     private lateinit var button: Button
     private lateinit var prefs: android.content.SharedPreferences
@@ -31,26 +30,25 @@ class ConnectionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection)
 
-        initViews()
-        setupPreferences()
-        loadSavedHost()
-        setupClickListeners()
-    }
-
-    private fun initViews() {
-        label = findViewById(R.id.main_label)
         userData = findViewById(R.id.user_data)
         button = findViewById(R.id.button)
-    }
-
-    private fun setupPreferences() {
         prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+        loadSavedHost()
+        setupClickListeners()
+
+        // Автозагрузка главной страницы при старте
+        prefs.getString("saved_host", null)?.let { host ->
+            if (host.isNotEmpty()) {
+                val url = "http://$host/"
+                performGetRequest(url)
+            }
+        }
     }
 
     private fun loadSavedHost() {
-        prefs.getString("saved_host", null)?.let { savedHost ->
-            userData.setText(savedHost)
-            label.text = "Сохранённый IP и порт: $savedHost"
+        prefs.getString("saved_host", null)?.let { host ->
+            userData.setText(host)
         }
     }
 
@@ -63,21 +61,17 @@ class ConnectionActivity : AppCompatActivity() {
     private fun handleUserInput() {
         var url = userData.text.toString().trim()
 
-        // если протокола нет, добавляем http://
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "http://$url"
         }
 
-        if (!AppUtils.isUrlCorrect(url)) {
-            Toast.makeText(this, "URL введён некорректно!", Toast.LENGTH_LONG).show()
-            label.text = "Некорректный URL: $url"
-            return
-        }
-
-        // сохраняем только IP и порт
-        AppUtils.extractHost(url)?.let { host ->
-            val port = URL(url).port.takeIf { it != -1 } ?: 80
+        try {
+            val host = URL(url).host
+            val port = if (URL(url).port != -1) URL(url).port else 80
             saveHost("$host:$port")
+        } catch (e: Exception) {
+            Toast.makeText(this, "Некорректный URL", Toast.LENGTH_LONG).show()
+            return
         }
 
         performGetRequest(url)
@@ -111,25 +105,22 @@ class ConnectionActivity : AppCompatActivity() {
 
                 if (response.isSuccessful) {
                     val body = response.body().orEmpty()
-                    label.text = when {
-                        body.isEmpty() -> "Пустой ответ"
-                        body.length > 1000 -> "Ответ слишком длинный:\n${body.take(1000)}..."
-                        else -> body
-                    }
-                    Toast.makeText(this@ConnectionActivity, "GET запрос успешен!", Toast.LENGTH_SHORT).show()
+                    // Открываем HtmlViewerActivity с полученным HTML
+                    val intent = Intent(this@ConnectionActivity, HtmlViewerActivity::class.java)
+                    intent.putExtra("html", body)
+                    startActivity(intent)
                 } else {
-                    label.text = "Ошибка: ${response.code()}"
+                    Toast.makeText(this@ConnectionActivity, "Ошибка: ${response.code()}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: IOException) {
-                label.text = "Сетевая ошибка: ${e.message}"
+                Toast.makeText(this@ConnectionActivity, "Сетевая ошибка: ${e.message}", Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                label.text = "Ошибка: ${e.message}"
+                Toast.makeText(this@ConnectionActivity, "Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun saveHost(hostWithPort: String) {
         prefs.edit { putString("saved_host", hostWithPort) }
-        label.text = "Сохранили IP и порт: $hostWithPort"
     }
 }
