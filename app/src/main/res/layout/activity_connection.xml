@@ -37,7 +37,7 @@
         android:layout_width="206dp"
         android:layout_height="54dp"
         android:layout_marginTop="80dp"
-        android:text="Button"
+        android:text="Подключиться"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"

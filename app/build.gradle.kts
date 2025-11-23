@@ -68,4 +68,5 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation("org.jsoup:jsoup:1.16.1")
+    implementation("androidx.core:core-ktx:1.12.0")
 }

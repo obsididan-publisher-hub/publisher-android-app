@@ -1,0 +1,18 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/footer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="bottom"
+    android:padding="16dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_change_host"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Сменить хранилище"
+        app:icon="@drawable/ic_cloud"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp" />
+</LinearLayout>

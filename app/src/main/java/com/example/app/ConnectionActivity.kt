@@ -1,6 +1,5 @@
 package com.example.app
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -32,16 +31,18 @@ class ConnectionActivity : AppCompatActivity() {
 
         userData = findViewById(R.id.user_data)
         button = findViewById(R.id.button)
-        prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
 
         loadSavedHost()
         setupClickListeners()
 
-        // Автозагрузка главной страницы при старте
-        prefs.getString("saved_host", null)?.let { host ->
-            if (host.isNotEmpty()) {
-                val url = "http://$host/"
-                performGetRequest(url)
+        val autoLoad = intent.getBooleanExtra("autoLoad", true)
+        if (autoLoad) {
+            prefs.getString("saved_host", null)?.let { host ->
+                if (host.isNotEmpty()) {
+                    val url = "http://$host/"
+                    performGetRequest(url)
+                }
             }
         }
     }
@@ -60,7 +61,6 @@ class ConnectionActivity : AppCompatActivity() {
 
     private fun handleUserInput() {
         var url = userData.text.toString().trim()
-
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "http://$url"
         }
@@ -69,7 +69,7 @@ class ConnectionActivity : AppCompatActivity() {
             val host = URL(url).host
             val port = if (URL(url).port != -1) URL(url).port else 80
             saveHost("$host:$port")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, "Некорректный URL", Toast.LENGTH_LONG).show()
             return
         }
@@ -81,17 +81,12 @@ class ConnectionActivity : AppCompatActivity() {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
-
-        val client = OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
-
+        val client = OkHttpClient.Builder().addInterceptor(logging).build()
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://localhost/") // фиктивный baseUrl
+            .baseUrl("https://localhost/")
             .client(client)
             .addConverterFactory(ScalarsConverterFactory.create())
             .build()
-
         return retrofit.create(ApiService::class.java)
     }
 
@@ -102,10 +97,8 @@ class ConnectionActivity : AppCompatActivity() {
                 val response: Response<String> = withContext(Dispatchers.IO) {
                     api.getRequest(fullUrl)
                 }
-
                 if (response.isSuccessful) {
                     val body = response.body().orEmpty()
-                    // Открываем HtmlViewerActivity с полученным HTML
                     val intent = Intent(this@ConnectionActivity, HtmlViewerActivity::class.java)
                     intent.putExtra("html", body)
                     startActivity(intent)
